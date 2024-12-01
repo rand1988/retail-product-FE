@@ -12,6 +12,7 @@ const SearchView: React.FC = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,11 +23,16 @@ const SearchView: React.FC = () => {
       }
 
       setIsLoading(true);
+      setError(null); // Reset error state
       try {
-        const response = await fetch(`http://localhost:8080/api/products/search?query=${query}`);
+        const response = await fetch(`http://localhost:9090/products/search?query=${query}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch products.");
+        }
         const data = await response.json();
         setResults(data);
       } catch (error) {
+        setError("Unable to fetch products. Please try again.");
         console.error("Error fetching products:", error);
       } finally {
         setIsLoading(false);
@@ -46,10 +52,12 @@ const SearchView: React.FC = () => {
             onChange={(e) => setQuery(e.target.value)}
         />
         {isLoading && <p>Loading...</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
         <ul>
           {results.map((product) => (
               <li key={product.id} onClick={() => navigate(`/products/${product.id}`)}>
-                <strong>{product.name}</strong> - {product.category} - ${product.price.toFixed(2)}
+                <strong>{product.name}</strong> - {product.category} - $
+                {product.price.toFixed(2)}
               </li>
           ))}
         </ul>
